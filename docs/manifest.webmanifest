@@ -1,0 +1,10 @@
+{
+  "name":"JCTC CyberGuard",
+  "short_name":"CyberGuard",
+  "start_url":"./",
+  "display":"standalone",
+  "background_color":"#06111b",
+  "theme_color":"#07131f",
+  "description":"Privacy-first public cybercrime risk and prevention assistant by JCTC.",
+  "icons":[]
+}
