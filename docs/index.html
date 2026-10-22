@@ -2,133 +2,155 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="theme-color" content="#07131f" />
-  <meta name="description" content="JCTC CyberGuard - a privacy-first public cybercrime risk and prevention assistant." />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#061621" />
+  <meta name="description" content="JCTC CyberGuard — a privacy-first public cybercrime risk and prevention assistant." />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
   <title>JCTC CyberGuard</title>
-  <link rel="manifest" href="manifest.webmanifest" />
-  <link rel="stylesheet" href="styles.css" />
+  <link rel="manifest" href="manifest.webmanifest?v=3" />
+  <link rel="stylesheet" href="styles.css?v=3.0.0" />
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to main content</a>
 
   <header class="site-header">
-    <div class="brand-wrap">
+    <a class="brand-wrap" href="#main" aria-label="JCTC CyberGuard home">
       <img src="assets/jctc-logo.jpeg" class="brand-logo" alt="Official JCTC logo" />
-      <div>
+      <div class="brand-copy">
         <div class="eyebrow">JOINT CASE TEAM ON CYBERCRIMES</div>
         <h1>JCTC CyberGuard</h1>
         <p>Check before you click. Verify before you pay.</p>
       </div>
-    </div>
-    <button id="installBtn" class="ghost-btn" hidden>Install App</button>
+    </a>
+    <button id="installBtn" class="ghost-btn" type="button" hidden>Install App</button>
   </header>
 
   <main id="main">
-    <section class="hero card hero-card">
-      <div>
+    <section class="hero card hero-card" aria-labelledby="heroTitle">
+      <div class="hero-copy">
         <span class="status-pill">PUBLIC PREVENTION TOOL • PRIVACY-FIRST</span>
-        <h2>Not sure if a message, email, link or payment request is suspicious?</h2>
-        <p>CyberGuard checks for common indicators associated with phishing, BEC, sextortion, impersonation, investment scams and account takeover.</p>
+        <h2 id="heroTitle">Not sure if a message, email, link or payment request is suspicious?</h2>
+        <p>CyberGuard checks for warning indicators commonly associated with phishing, BEC, sextortion, impersonation, investment scams and account takeover.</p>
       </div>
       <div class="hero-note">
         <strong>Important</strong>
-        <p>This tool provides a risk assessment, not a finding of guilt or criminality.</p>
+        <p>This tool provides a risk assessment, not a finding of guilt or criminality. Independently verify before acting.</p>
       </div>
     </section>
 
-    <section class="mode-tabs" aria-label="Analysis modes">
-      <button class="tab active" data-mode="message">Message / Screenshot</button>
-      <button class="tab" data-mode="bec">Email / BEC</button>
-      <button class="tab" data-mode="url">Link Check</button>
-      <button class="tab" data-mode="sextortion">Sextortion Help</button>
+    <section class="mode-tabs" role="tablist" aria-label="CyberGuard analysis modes">
+      <button class="tab active" type="button" role="tab" aria-selected="true" aria-controls="messageMode" id="tab-message" data-mode="message">Message / Screenshot</button>
+      <button class="tab" type="button" role="tab" aria-selected="false" aria-controls="becMode" id="tab-bec" data-mode="bec">Email / BEC</button>
+      <button class="tab" type="button" role="tab" aria-selected="false" aria-controls="urlMode" id="tab-url" data-mode="url">Link Check</button>
+      <button class="tab" type="button" role="tab" aria-selected="false" aria-controls="sextortionMode" id="tab-sextortion" data-mode="sextortion">Sextortion Help</button>
     </section>
 
     <section class="workspace">
       <div class="input-panel card">
-        <div id="messageMode" class="mode-panel active">
+        <div id="messageMode" class="mode-panel active" role="tabpanel" aria-labelledby="tab-message">
           <div class="section-heading">
-            <div>
+            <div class="min-zero">
               <p class="eyebrow">QUICK SCAN</p>
               <h3>Paste suspicious text</h3>
             </div>
-            <button id="clearMessage" class="text-btn">Clear</button>
+            <button id="clearMessage" class="text-btn" type="button">Clear</button>
           </div>
+
           <label for="messageInput">Message, chat, advert or payment request</label>
-          <textarea id="messageInput" rows="10" placeholder="Example: Your account will be blocked today. Click this link and send your OTP..."></textarea>
+          <textarea id="messageInput" rows="10" spellcheck="true" placeholder="Example: Your account will be blocked today. Click this link and send your OTP..."></textarea>
 
           <div class="upload-box">
-            <label for="screenshotInput" class="upload-label">Upload a screenshot (optional)</label>
+            <label for="screenshotInput" class="upload-label">Upload a screenshot <span>(optional)</span></label>
             <input id="screenshotInput" type="file" accept="image/png,image/jpeg,image/webp" />
             <p class="microcopy">Text extraction happens in your browser. Do not upload intimate or explicit images.</p>
-            <div id="ocrStatus" class="ocr-status" aria-live="polite"></div>
+            <div id="ocrStatus" class="form-status" aria-live="polite"></div>
           </div>
-          <button id="analyzeMessage" class="primary-btn">Check for Risk Indicators</button>
+
+          <div id="messageStatus" class="form-status error" aria-live="polite"></div>
+          <button id="analyzeMessage" class="primary-btn" type="button">Check for Risk Indicators</button>
         </div>
 
-        <div id="becMode" class="mode-panel">
+        <div id="becMode" class="mode-panel" role="tabpanel" aria-labelledby="tab-bec" hidden>
           <p class="eyebrow">BUSINESS EMAIL COMPROMISE</p>
           <h3>Check a suspicious business email</h3>
+
           <div class="field-grid">
-            <div>
-              <label for="fromEmail">From email</label>
-              <input id="fromEmail" type="email" placeholder="finance@example.com" />
+            <div class="min-zero">
+              <label for="fromEmail">From email <span class="optional">(optional)</span></label>
+              <input id="fromEmail" type="email" inputmode="email" autocomplete="off" placeholder="finance@example.com" />
             </div>
-            <div>
-              <label for="replyToEmail">Reply-To email</label>
-              <input id="replyToEmail" type="email" placeholder="payments@example.net" />
+            <div class="min-zero">
+              <label for="replyToEmail">Reply-To email <span class="optional">(optional)</span></label>
+              <input id="replyToEmail" type="email" inputmode="email" autocomplete="off" placeholder="payments@example.net" />
             </div>
           </div>
+
           <label for="emailSubject">Subject</label>
-          <input id="emailSubject" type="text" placeholder="Urgent payment instruction" />
+          <input id="emailSubject" type="text" autocomplete="off" placeholder="Urgent payment instruction" />
+
           <label for="emailBody">Email body</label>
           <textarea id="emailBody" rows="10" placeholder="Paste the email text here..."></textarea>
-          <button id="analyzeBec" class="primary-btn">Check BEC Risk</button>
+
+          <div id="becStatus" class="form-status error" aria-live="polite"></div>
+          <button id="analyzeBec" class="primary-btn" type="button">Check BEC Risk</button>
         </div>
 
-        <div id="urlMode" class="mode-panel">
+        <div id="urlMode" class="mode-panel" role="tabpanel" aria-labelledby="tab-url" hidden>
           <p class="eyebrow">LINK CHECK</p>
           <h3>Inspect a link before opening it</h3>
+
           <label for="urlInput">URL</label>
-          <input id="urlInput" type="url" placeholder="https://example.com/login" />
+          <input id="urlInput" type="text" inputmode="url" autocomplete="off" placeholder="https://example.com/login" />
           <p class="microcopy">CyberGuard analyses the URL text only. It does not visit or open the link.</p>
-          <button id="analyzeUrl" class="primary-btn">Check Link</button>
+
+          <div id="urlStatus" class="form-status error" aria-live="polite"></div>
+          <button id="analyzeUrl" class="primary-btn" type="button">Check Link</button>
         </div>
 
-        <div id="sextortionMode" class="mode-panel">
+        <div id="sextortionMode" class="mode-panel" role="tabpanel" aria-labelledby="tab-sextortion" hidden>
           <div class="safety-callout">
             <strong>Do not upload intimate images.</strong>
-            <p>CyberGuard only needs the threatening message and non-explicit evidence such as usernames, links or payment demands.</p>
+            <p>CyberGuard only needs threatening text and non-explicit evidence such as usernames, links or payment demands.</p>
           </div>
+
           <p class="eyebrow">SEXTORTION SUPPORT</p>
           <h3>Check a threat and get immediate guidance</h3>
-          <label for="sextortionText">Threatening message</label>
+
+          <label for="sextortionText">Threatening message <span class="optional">(recommended)</span></label>
           <textarea id="sextortionText" rows="8" placeholder="Paste the threatening message here..."></textarea>
-          <div class="check-grid">
-            <label><input type="checkbox" id="moneyDemand" /> Money or payment demanded</label>
-            <label><input type="checkbox" id="moreImagesDemand" /> More images demanded</label>
-            <label><input type="checkbox" id="publicationThreat" /> Threat to publish/share content</label>
-            <label><input type="checkbox" id="minorInvolved" /> Person involved is under 18</label>
-          </div>
-          <button id="analyzeSextortion" class="primary-btn danger-btn">Get Safety Guidance</button>
+
+          <fieldset class="check-grid">
+            <legend>What is happening?</legend>
+            <label><input type="checkbox" id="moneyDemand" /> <span>Money or payment demanded</span></label>
+            <label><input type="checkbox" id="moreImagesDemand" /> <span>More images demanded</span></label>
+            <label><input type="checkbox" id="publicationThreat" /> <span>Threat to publish or share content</span></label>
+            <label><input type="checkbox" id="minorInvolved" /> <span>Person involved is under 18</span></label>
+          </fieldset>
+
+          <div id="sextortionStatus" class="form-status error" aria-live="polite"></div>
+          <button id="analyzeSextortion" class="primary-btn danger-btn" type="button">Get Safety Guidance</button>
         </div>
       </div>
 
-      <aside class="result-panel card" aria-live="polite">
+      <aside id="resultPanel" class="result-panel card" aria-live="polite" aria-label="CyberGuard assessment result">
         <div id="emptyState" class="empty-state">
-          <div class="scan-orb">✓</div>
+          <div class="scan-orb" aria-hidden="true">✓</div>
           <h3>Your assessment will appear here</h3>
           <p>CyberGuard looks for risk indicators and explains what to do next.</p>
         </div>
+
         <div id="resultState" hidden>
           <div class="result-topline">
-            <div>
+            <div class="min-zero">
               <p class="eyebrow">RISK ASSESSMENT</p>
               <h3 id="resultCategory">Analysis result</h3>
             </div>
-            <div id="riskBadge" class="risk-badge">LOW</div>
+            <div id="riskBadge" class="risk-badge">LOW • 0%</div>
           </div>
-          <div class="risk-meter"><div id="riskMeterFill"></div></div>
+
+          <div class="risk-meter" aria-hidden="true"><div id="riskMeterFill"></div></div>
           <p id="riskSummary" class="risk-summary"></p>
 
           <div class="result-section">
@@ -146,6 +168,12 @@
             <div id="evidenceTags" class="tag-cloud"></div>
           </div>
 
+          <div class="result-actions">
+            <button id="copyResultBtn" class="secondary-btn" type="button">Copy Assessment</button>
+            <button id="newCheckBtn" class="secondary-btn" type="button">Start New Check</button>
+          </div>
+          <div id="resultActionStatus" class="form-status" aria-live="polite"></div>
+
           <div class="disclaimer">
             <strong>Remember:</strong> A high-risk result does not prove that a person or organisation committed a crime. Independently verify and use appropriate official reporting channels where necessary.
           </div>
@@ -153,29 +181,29 @@
       </aside>
     </section>
 
-    <section class="info-grid">
+    <section class="info-grid" aria-label="Core cybercrime safety guidance">
       <article class="card info-card">
-        <span class="info-icon">🛡️</span>
+        <span class="info-icon" aria-hidden="true">🛡️</span>
         <h3>Don’t Fall Victim</h3>
         <p>Pause. Verify unusual requests. Never share your OTP, PIN, password or recovery code.</p>
       </article>
       <article class="card info-card">
-        <span class="info-icon">⚖️</span>
+        <span class="info-icon" aria-hidden="true">⚖️</span>
         <h3>Don’t Perpetrate</h3>
         <p>Do not lend your account, wallet, SIM or identity for suspicious transactions or deceptive activity.</p>
       </article>
       <article class="card info-card">
-        <span class="info-icon">📁</span>
+        <span class="info-icon" aria-hidden="true">📁</span>
         <h3>Preserve Evidence</h3>
         <p>Keep messages, screenshots, usernames, links, transaction records, wallet addresses, receipts, dates and times.</p>
       </article>
     </section>
 
     <section class="card privacy-section">
-      <div>
+      <div class="min-zero">
         <p class="eyebrow">PRIVACY BY DESIGN</p>
         <h3>Your quick checks stay on your device</h3>
-        <p>The GitHub Pages MVP analyses text locally in your browser. No account is required and this version does not create a crime-reporting database.</p>
+        <p>The GitHub Pages version analyses text locally in your browser. No account is required and this version does not create a crime-reporting database.</p>
       </div>
       <div class="privacy-bullets">
         <span>✓ No passwords or OTPs requested</span>
@@ -188,13 +216,17 @@
 
   <footer>
     <img src="assets/jctc-logo.jpeg" alt="JCTC logo" />
-    <div>
+    <div class="min-zero">
       <strong>Joint Case Team on Cybercrimes (JCTC)</strong>
       <p>Know the conduct. Recognise the warning signs. Preserve the evidence. Report appropriately.</p>
     </div>
   </footer>
 
-  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
-  <script src="app.js"></script>
+  <noscript>
+    <div class="noscript">CyberGuard requires JavaScript to perform local risk checks. Please enable JavaScript and reload the page.</div>
+  </noscript>
+
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js" defer></script>
+  <script src="app.js?v=3.0.0" defer></script>
 </body>
 </html>
