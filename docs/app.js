@@ -1,333 +1,45 @@
-const tabs = document.querySelectorAll('.tab');
-const panels = {
-  message: document.getElementById('messageMode'),
-  bec: document.getElementById('becMode'),
-  url: document.getElementById('urlMode'),
-  sextortion: document.getElementById('sextortionMode')
+'use strict';
+const $=id=>document.getElementById(id), $$=s=>[...document.querySelectorAll(s)];
+const labels={phishing:'Possible Phishing / Credential Theft',bec:'Possible Business Email Compromise (BEC)',sextortion:'Possible Sextortion / Online Blackmail',investment:'Possible Investment / Cryptocurrency Scam',impersonation:'Possible Impersonation Scam',takeover:'Possible Account Takeover Attempt',jobscam:'Possible Job / Recruitment Scam',general:'General Cybercrime Risk Indicators'};
+const rules={
+phishing:[[/\botp\b|one[- ]time password|verification code|security code/i,18,'Requests or references to an OTP or verification code'],[/\bpassword\b|\bpin\b|\blogin\b|sign in|credential/i,12,'Requests or references to sensitive login information'],[/account.{0,30}(blocked|suspended|restricted|locked|closed)/i,14,'Threatens account restriction or suspension'],[/click.{0,25}(link|here)|verify.{0,25}(account|identity)|update.{0,20}details/i,13,'Pushes the recipient to click or verify through a link'],[/bank|wallet|payment service|mobile money/i,5,'Uses financial-service language']],
+bec:[[/urgent|immediately|asap|right away|today|before close of business/i,10,'Creates urgency around a business action'],[/wire|transfer|payment|beneficiary|invoice|bank account|account details/i,14,'Contains payment or beneficiary instructions'],[/new account|change.{0,18}(account|bank)|updated bank|different account|revised account/i,20,'Requests a change in payment destination'],[/do not call|don'?t call|confidential|keep this between us|do not discuss/i,18,'Discourages independent verification'],[/ceo|director|managing director|\bmd\b|chairman|boss|executive/i,8,'Uses executive-authority language']],
+sextortion:[[/nude|naked|intimate|private (photo|video|image)|sex tape|explicit/i,17,'References intimate or private material'],[/send.{0,25}(money|bitcoin|crypto|usdt)|pay me|payment|ransom/i,16,'Demands money or another form of value'],[/post|publish|share|upload|send.{0,25}(family|friends|contacts|school|work|followers)/i,20,'Threatens publication or distribution'],[/unless you|if you don'?t|or else|blackmail|expose you/i,16,'Uses conditional threats or coercion']],
+investment:[[/guaranteed (profit|return)|risk[- ]free|no risk|100% safe/i,18,'Promises guaranteed or risk-free returns'],[/double|triple|[2-9]x|[1-9]\d{2,}%/i,12,'Promises unusually large returns'],[/withdrawal fee|release fee|tax fee|unlock fee|activation fee/i,20,'Requests an additional fee before withdrawal'],[/invest now|limited slot|act now|today only|last chance/i,10,'Pressures the recipient to invest quickly']],
+impersonation:[[/new number|lost my phone|my other number|changed my number/i,12,'Uses a new-number explanation'],[/i'?m (your|the) (boss|director|friend|brother|sister|uncle|aunt|colleague)/i,10,'Claims a trusted identity'],[/please don'?t call|can'?t talk now|in a meeting/i,13,'Discourages direct confirmation'],[/send me|help me with|borrow me|loan me|urgent money/i,8,'Requests money while claiming a trusted identity']],
+takeover:[[/send me the code|what code did you receive|verification code|reset code/i,16,'Requests an account verification or reset code'],[/your account.{0,20}(hacked|compromised)|security alert|unusual login/i,8,'Uses account-security language']],
+jobscam:[[/job offer|employment|recruitment|interview|vacancy/i,6,'Uses recruitment or employment language'],[/registration fee|processing fee|training fee|application fee/i,18,'Requests payment as part of recruitment'],[/guaranteed job|instant employment|no interview/i,14,'Promises employment without normal verification']]
 };
-
-tabs.forEach(btn => btn.addEventListener('click', () => {
-  tabs.forEach(b => b.classList.remove('active'));
-  Object.values(panels).forEach(p => p.classList.remove('active'));
-  btn.classList.add('active');
-  panels[btn.dataset.mode].classList.add('active');
-}));
-
-const rules = {
-  phishing: [
-    [/otp|one[- ]time password|verification code/i, 16, 'Requests or references to an OTP / verification code'],
-    [/password|pin|login|sign in|credential/i, 11, 'Requests for sensitive login information'],
-    [/account.{0,25}(blocked|suspended|restricted|locked)/i, 13, 'Threatens account restriction or suspension'],
-    [/click.{0,18}(link|here)|verify.{0,18}(account|identity)/i, 12, 'Pushes the recipient to click or verify through a link'],
-    [/bank|wallet|payment service/i, 5, 'Uses financial-service language']
-  ],
-  bec: [
-    [/urgent|immediately|asap|right away|today/i, 9, 'Creates urgency around a business action'],
-    [/wire|transfer|payment|beneficiary|invoice|bank account/i, 12, 'Contains payment or beneficiary instructions'],
-    [/new account|change.{0,15}(account|bank)|updated bank|different account/i, 18, 'Requests a change in payment destination'],
-    [/do not call|don'?t call|confidential|keep this between us/i, 16, 'Discourages independent verification'],
-    [/ceo|director|md|managing director|chairman|boss/i, 7, 'Uses executive-authority language']
-  ],
-  sextortion: [
-    [/nude|naked|intimate|private (photo|video|image)|sex tape/i, 16, 'References intimate or private material'],
-    [/send.{0,20}(money|bitcoin|crypto|usdt)|pay me|payment/i, 15, 'Demands money or value'],
-    [/post|publish|share|send.{0,20}(family|friends|contacts|school|work)/i, 18, 'Threatens publication or distribution'],
-    [/unless you|if you don'?t|or else|blackmail/i, 14, 'Uses conditional threats or coercion'],
-    [/send.{0,15}(more|another).{0,12}(photo|image|video)/i, 18, 'Demands additional intimate material']
-  ],
-  investment: [
-    [/guaranteed (profit|return)|risk[- ]free|no risk/i, 16, 'Promises guaranteed or risk-free returns'],
-    [/double|triple|[2-9]x|[1-9]\d{2,}%/i, 11, 'Promises unusually large returns'],
-    [/withdrawal fee|release fee|tax fee|unlock fee/i, 18, 'Requests an additional fee before withdrawal'],
-    [/invest now|limited slot|act now|today only/i, 9, 'Pressures the recipient to invest quickly'],
-    [/crypto|bitcoin|usdt|forex|mining/i, 5, 'Uses high-risk investment terminology']
-  ],
-  impersonation: [
-    [/new number|lost my phone|my other number/i, 10, 'Uses a new-number explanation'],
-    [/i'?m (your|the) (boss|director|friend|brother|sister|relative)/i, 8, 'Claims a familiar or authoritative identity'],
-    [/send me|help me with|borrow me|urgent money/i, 9, 'Requests money through a personal appeal']
-  ],
-  takeover: [
-    [/reset code|security code|verification code|otp/i, 12, 'References account recovery or verification codes'],
-    [/your account|login attempt|password reset/i, 9, 'References account access or password recovery']
-  ],
-  jobscam: [
-    [/job offer|employment|recruitment|work from home/i, 8, 'Presents a job or recruitment opportunity'],
-    [/application fee|processing fee|training fee|visa fee/i, 18, 'Requests an upfront job-related fee'],
-    [/no interview|instant employment|guaranteed job/i, 14, 'Promises employment without normal verification']
-  ]
-};
-
-const categoryLabels = {
-  phishing: 'Possible Phishing / Credential Theft',
-  bec: 'Possible Business Email Compromise',
-  sextortion: 'Possible Sextortion / Online Blackmail',
-  investment: 'Possible Investment / Crypto Scam',
-  impersonation: 'Possible Impersonation Scam',
-  takeover: 'Possible Account Takeover Attempt',
-  jobscam: 'Possible Job / Recruitment Scam',
-  general: 'General Cybercrime Risk Indicators'
-};
-
-function analyseText(text, extra = {}) {
-  const input = (text || '').trim();
-  let categoryScores = {};
-  let matched = [];
-
-  Object.entries(rules).forEach(([category, group]) => {
-    categoryScores[category] = 0;
-    group.forEach(([pattern, score, reason]) => {
-      if (pattern.test(input)) {
-        categoryScores[category] += score;
-        matched.push({ category, score, reason });
-      }
-    });
-  });
-
-  if (extra.replyMismatch) {
-    categoryScores.bec = (categoryScores.bec || 0) + 24;
-    matched.push({ category:'bec', score:24, reason:'From and Reply-To domains do not match' });
-  }
-  if (extra.minorInvolved) {
-    categoryScores.sextortion = (categoryScores.sextortion || 0) + 25;
-    matched.push({ category:'sextortion', score:25, reason:'A person under 18 may be involved — urgent safeguarding review is required' });
-  }
-  if (extra.moneyDemand) {
-    categoryScores.sextortion = (categoryScores.sextortion || 0) + 12;
-    matched.push({ category:'sextortion', score:12, reason:'A payment demand is reported' });
-  }
-  if (extra.moreImagesDemand) {
-    categoryScores.sextortion = (categoryScores.sextortion || 0) + 16;
-    matched.push({ category:'sextortion', score:16, reason:'More intimate material is being demanded' });
-  }
-  if (extra.publicationThreat) {
-    categoryScores.sextortion = (categoryScores.sextortion || 0) + 18;
-    matched.push({ category:'sextortion', score:18, reason:'A threat to publish or share material is reported' });
-  }
-
-  const ranked = Object.entries(categoryScores).sort((a,b) => b[1]-a[1]);
-  const [topCategory, topScore] = ranked[0] || ['general',0];
-  const secondScore = ranked[1]?.[1] || 0;
-  const totalRisk = Math.min(100, Math.round(topScore + Math.min(secondScore * 0.25, 12)));
-  const topIndicators = matched
-    .filter(m => m.category === topCategory || m.score >= 16)
-    .sort((a,b) => b.score-a.score)
-    .map(m => m.reason)
-    .filter((v,i,a) => a.indexOf(v) === i)
-    .slice(0,6);
-
-  return buildResult(topCategory, totalRisk, topIndicators, extra);
-}
-
-function analyseUrl(raw) {
-  let urlString = (raw || '').trim();
-  let indicators = [];
-  let score = 0;
-  if (!urlString) return buildResult('general',0,['No URL was entered.'],{});
-  try {
-    if (!/^https?:\/\//i.test(urlString)) urlString = 'https://' + urlString;
-    const u = new URL(urlString);
-    const host = u.hostname.toLowerCase();
-    if (/^\d{1,3}(\.\d{1,3}){3}$/.test(host)) { score += 22; indicators.push('The link uses a raw IP address instead of a normal domain name'); }
-    if (host.includes('xn--')) { score += 18; indicators.push('The domain contains Punycode and may visually imitate another domain'); }
-    if ((host.match(/-/g)||[]).length >= 3) { score += 10; indicators.push('The domain contains an unusual number of hyphens'); }
-    if (host.split('.').length >= 5) { score += 10; indicators.push('The link contains many subdomains, which can obscure the real domain'); }
-    if (u.username || u.password) { score += 22; indicators.push('The URL contains embedded username/password information'); }
-    if (urlString.length > 120) { score += 8; indicators.push('The URL is unusually long'); }
-    if (/login|verify|secure|account|wallet|bank|update/i.test(u.pathname + u.search)) { score += 8; indicators.push('The path uses login, verification or account-security language'); }
-    if (u.protocol !== 'https:') { score += 12; indicators.push('The link does not use HTTPS'); }
-    if (/bit\.ly|tinyurl|t\.co|goo\.gl|is\.gd/i.test(host)) { score += 10; indicators.push('The link uses a shortening service that hides the final destination'); }
-    if (!indicators.length) indicators.push('No obvious structural URL warning signs were detected');
-  } catch {
-    score = 35;
-    indicators.push('The text does not appear to be a well-formed URL');
-  }
-  return buildResult('phishing', Math.min(score,100), indicators, {urlOnly:true});
-}
-
-function buildResult(category, score, indicators, extra) {
-  let level = 'LOW';
-  if (score >= 65) level = 'CRITICAL';
-  else if (score >= 40) level = 'HIGH';
-  else if (score >= 15) level = 'MEDIUM';
-
-  if (!indicators.length) indicators = ['No strong indicators were detected in the text provided. Continue to verify independently.'];
-
-  const actionsByCategory = {
-    sextortion: [
-      'Do not panic and do not send more money or intimate material.',
-      'Preserve the threatening messages, usernames, profile links, payment details, dates and times.',
-      'Secure your accounts and tell a trusted person.',
-      extra.minorInvolved ? 'Because a person under 18 may be involved, seek urgent safeguarding and official reporting support.' : 'Use an appropriate official reporting channel if the threat is active or harm has occurred.',
-      'Do not upload or redistribute intimate images when seeking help.'
-    ],
-    bec: [
-      'Do not make or change a payment based only on this email.',
-      'Verify the instruction using a trusted phone number or contact method you already had before the email arrived.',
-      'Preserve the original email and full headers.',
-      'If payment was already made, contact the financial institution immediately and preserve transaction details.'
-    ],
-    phishing: [
-      extra.urlOnly ? 'Do not open the link until the sender and destination are independently verified.' : 'Do not click suspicious links or provide passwords, OTPs, PINs or recovery codes.',
-      'Verify the request using the organisation’s independently confirmed website, app or contact details.',
-      'Preserve the message, sender details, link and time received.',
-      'If credentials were already entered, secure the affected account immediately.'
-    ],
-    investment: [
-      'Do not send money because of urgency or guaranteed-return claims.',
-      'Independently verify the operator, investment and regulatory status.',
-      'Do not pay repeated “withdrawal”, “tax” or “release” fees without verification.',
-      'Preserve adverts, chats, account details, wallet addresses, transaction IDs and receipts.'
-    ],
-    impersonation: [
-      'Contact the person or organisation through a previously trusted channel.',
-      'Do not send money solely because the message appears to come from someone you know.',
-      'Preserve the fake profile, username, phone number and messages.'
-    ],
-    takeover: [
-      'Do not share verification codes or recovery credentials.',
-      'Change compromised passwords and enable additional account security where available.',
-      'Review active sessions and recovery details on the account.'
-    ],
-    jobscam: [
-      'Verify the employer independently before paying any fee or sharing sensitive information.',
-      'Be cautious of guaranteed jobs, instant offers or recruitment payments.',
-      'Preserve the advert, recruiter profile, emails and payment instructions.'
-    ],
-    general: [
-      'Verify unusual requests independently before acting.',
-      'Do not disclose passwords, OTPs, PINs or recovery codes.',
-      'Preserve relevant messages, account details, links and transaction records.'
-    ]
-  };
-
-  const evidenceByCategory = {
-    sextortion:['Threat messages','Username/profile URL','Phone/email','Payment details','Wallet address','Dates & times'],
-    bec:['Original email','Full headers','Invoice','Beneficiary details','Payment record','Verification call notes'],
-    phishing:['Message','Sender details','URL','Screenshot','Account activity','Date & time'],
-    investment:['Advert','Chats','Website/domain','Bank/wallet details','Transaction IDs','Receipts'],
-    impersonation:['Profile URL','Username','Phone number','Messages','Payment request','Screenshot'],
-    takeover:['Security alerts','Login history','Recovery changes','Messages','Device/session details'],
-    jobscam:['Job advert','Recruiter profile','Emails','Payment request','Bank details'],
-    general:['Messages','Screenshots','Usernames','Links','Payment details','Dates & times']
-  };
-
-  const summary = score >= 65
-    ? 'Multiple high-risk indicators were detected. Treat the communication as potentially harmful until independently verified.'
-    : score >= 40
-    ? 'Several significant risk indicators were detected. Do not act on the request until you independently verify it.'
-    : score >= 15
-    ? 'Some warning signs were detected. Use caution and verify before clicking, paying or sharing information.'
-    : 'Few strong indicators were detected in the information supplied. This does not guarantee that the communication is safe.';
-
-  return {
-    category,
-    label: categoryLabels[category] || categoryLabels.general,
-    score,
-    level,
-    indicators,
-    actions: actionsByCategory[category] || actionsByCategory.general,
-    evidence: evidenceByCategory[category] || evidenceByCategory.general,
-    summary
-  };
-}
-
-function renderResult(result) {
-  document.getElementById('emptyState').hidden = true;
-  document.getElementById('resultState').hidden = false;
-  document.getElementById('resultCategory').textContent = result.label;
-  document.getElementById('riskSummary').textContent = result.summary;
-
-  const badge = document.getElementById('riskBadge');
-  badge.textContent = `${result.level} • ${result.score}%`;
-  const palette = {LOW:'#23c77a',MEDIUM:'#e1b34d',HIGH:'#f09a48',CRITICAL:'#ef5a62'};
-  badge.style.background = palette[result.level] + '22';
-  badge.style.color = palette[result.level];
-  badge.style.border = `1px solid ${palette[result.level]}66`;
-  const meter = document.getElementById('riskMeterFill');
-  meter.style.width = result.score + '%';
-  meter.style.background = palette[result.level];
-
-  const indicatorList = document.getElementById('indicatorList');
-  indicatorList.innerHTML = '';
-  result.indicators.forEach(x => { const li=document.createElement('li'); li.textContent=x; indicatorList.appendChild(li); });
-
-  const actionList = document.getElementById('actionList');
-  actionList.innerHTML = '';
-  result.actions.forEach(x => { const li=document.createElement('li'); li.textContent=x; actionList.appendChild(li); });
-
-  const evidence = document.getElementById('evidenceTags');
-  evidence.innerHTML = '';
-  result.evidence.forEach(x => { const s=document.createElement('span'); s.textContent=x; evidence.appendChild(s); });
-}
-
-document.getElementById('analyzeMessage').addEventListener('click', () => {
-  renderResult(analyseText(document.getElementById('messageInput').value));
-});
-
-document.getElementById('clearMessage').addEventListener('click', () => {
-  document.getElementById('messageInput').value='';
-  document.getElementById('screenshotInput').value='';
-  document.getElementById('ocrStatus').textContent='';
-});
-
-document.getElementById('analyzeBec').addEventListener('click', () => {
-  const from = document.getElementById('fromEmail').value.trim();
-  const reply = document.getElementById('replyToEmail').value.trim();
-  let mismatch = false;
-  const domain = email => (email.split('@')[1] || '').toLowerCase();
-  if (from && reply && domain(from) && domain(reply) && domain(from) !== domain(reply)) mismatch = true;
-  const text = `${document.getElementById('emailSubject').value}\n${document.getElementById('emailBody').value}`;
-  const res = analyseText(text,{replyMismatch:mismatch});
-  if (res.category !== 'bec' && mismatch) res.category='bec';
-  renderResult(res);
-});
-
-document.getElementById('analyzeUrl').addEventListener('click', () => {
-  renderResult(analyseUrl(document.getElementById('urlInput').value));
-});
-
-document.getElementById('analyzeSextortion').addEventListener('click', () => {
-  renderResult(analyseText(document.getElementById('sextortionText').value, {
-    moneyDemand: document.getElementById('moneyDemand').checked,
-    moreImagesDemand: document.getElementById('moreImagesDemand').checked,
-    publicationThreat: document.getElementById('publicationThreat').checked,
-    minorInvolved: document.getElementById('minorInvolved').checked
-  }));
-});
-
-const screenshotInput = document.getElementById('screenshotInput');
-screenshotInput.addEventListener('change', async () => {
-  const file = screenshotInput.files?.[0];
-  const status = document.getElementById('ocrStatus');
-  if (!file) return;
-  if (!window.Tesseract) {
-    status.textContent = 'Text extraction library could not load. You can still paste the text manually.';
-    return;
-  }
-  status.textContent = 'Extracting text locally from the screenshot…';
-  try {
-    const result = await Tesseract.recognize(file, 'eng', {
-      logger: m => {
-        if (m.status === 'recognizing text') status.textContent = `Extracting text… ${Math.round((m.progress||0)*100)}%`;
-      }
-    });
-    const extracted = result.data.text.trim();
-    if (extracted) {
-      document.getElementById('messageInput').value = extracted;
-      status.textContent = 'Text extracted. Review it, then run the risk check.';
-    } else status.textContent = 'No readable text was found. Paste the message manually.';
-  } catch (e) {
-    console.error(e);
-    status.textContent = 'Text extraction failed. Paste the message manually.';
-  }
-});
-
-let deferredPrompt;
-window.addEventListener('beforeinstallprompt', e => {
-  e.preventDefault(); deferredPrompt = e;
-  const btn = document.getElementById('installBtn'); btn.hidden = false;
-  btn.addEventListener('click', async () => { deferredPrompt.prompt(); await deferredPrompt.userChoice; btn.hidden=true; });
-});
-
-if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('sw.js'));
+const actions={
+sextortion:['Do not panic and do not send more money or intimate material.','Preserve threatening messages, usernames, profile links, payment details, dates and times.','Secure your accounts and tell a trusted person.','Use an appropriate official reporting channel if the threat is active or harm has occurred.','Do not upload or redistribute intimate images when seeking help.'],
+bec:['Do not make or change a payment based only on this email.','Verify the instruction using a trusted contact method you already had before the email arrived.','Preserve the original email and full headers.','If payment was already made, contact the financial institution immediately and preserve transaction details.'],
+phishing:['Do not click suspicious links or provide passwords, OTPs, PINs or recovery codes.','Verify the request using independently confirmed contact details.','Preserve the message, sender details, link and time received.','If credentials were already entered, secure the affected account immediately.'],
+investment:['Do not send money because of urgency or guaranteed-return claims.','Independently verify the operator, investment and regulatory status.','Do not pay repeated withdrawal, tax or release fees without verification.','Preserve adverts, chats, account details, wallet addresses, transaction IDs and receipts.'],
+impersonation:['Contact the person or organisation through a previously trusted channel.','Do not send money solely because the message appears to come from someone you know.','Preserve the fake profile, username, phone number and messages.'],
+takeover:['Do not share verification codes or recovery credentials.','Change compromised passwords and enable additional account security where available.','Review active sessions and recovery details on the account.'],
+jobscam:['Verify the employer independently before paying any fee or sharing sensitive information.','Be cautious of guaranteed jobs, instant offers or recruitment payments.','Preserve the advert, recruiter profile, emails and payment instructions.'],
+general:['Verify unusual requests independently before acting.','Do not disclose passwords, OTPs, PINs or recovery codes.','Preserve relevant messages, account details, links and transaction records.']};
+const evidence={sextortion:['Threat messages','Username / profile URL','Phone / email','Payment details','Wallet address','Dates & times'],bec:['Original email','Full email headers','Invoice','Beneficiary details','Payment record','Verification notes'],phishing:['Message','Sender details','URL','Screenshot','Account activity','Date & time'],investment:['Advert','Chats','Website / domain','Bank / wallet details','Transaction IDs','Receipts'],impersonation:['Profile URL','Username','Phone number','Messages','Payment request','Screenshot'],takeover:['Security alerts','Login history','Recovery changes','Messages'],jobscam:['Job advert','Recruiter profile','Emails','Payment request','Bank details'],general:['Messages','Screenshots','Usernames','Links','Payment details','Dates & times']};
+const status=(id,t='')=>{const e=$(id);if(e)e.textContent=t};
+function switchMode(m){const map={message:'messageMode',bec:'becMode',url:'urlMode',sextortion:'sextortionMode'};if(!map[m])return;$$('.tab').forEach(b=>{const a=b.dataset.mode===m;b.classList.toggle('active',a);b.setAttribute('aria-selected',a)});Object.entries(map).forEach(([k,id])=>{const p=$(id),a=k===m;p.classList.toggle('active',a);p.hidden=!a})}
+$$('.tab').forEach(b=>b.onclick=()=>switchMode(b.dataset.mode));
+const level=s=>s>=65?'CRITICAL':s>=40?'HIGH':s>=15?'MEDIUM':'LOW';
+function catScore(text,cat){let s=0,i=[];(rules[cat]||[]).forEach(([r,w,d])=>{if(r.test(text)){s+=w;i.push(d)}});return{score:s,indicators:i}}
+function result(cat,score,ind=[],opts={}){score=Math.max(0,Math.min(100,Math.round(score)));let a=[...(actions[cat]||actions.general)];if(cat==='sextortion'&&opts.minorInvolved)a[3]='Because a person under 18 may be involved, seek urgent safeguarding and official reporting support.';return{category:cat,label:labels[cat]||labels.general,score,level:level(score),indicators:[...new Set(ind.length?ind:['No strong indicators were detected. Continue to verify independently.'])],actions:a,evidence:evidence[cat]||evidence.general,summary:score>=65?'Multiple high-risk indicators were detected. Treat this as urgent and verify before taking any further action.':score>=40?'Several significant risk indicators were detected. Pause and verify independently before acting.':score>=15?'Some warning indicators were detected. Exercise caution and verify independently.':'No strong warning indicators were detected from the information provided, but this is not a guarantee of safety.'}}
+function analyseText(text){let best={cat:'general',score:0,ind:[]};Object.keys(rules).forEach(c=>{const x=catScore(text,c);if(x.score>best.score)best={cat:c,score:x.score,ind:x.indicators}});return result(best.cat,best.score,best.ind)}
+function analyseUrl(raw){let v=raw.trim(),s=0,i=[];try{if(!/^https?:\/\//i.test(v))v='https://'+v;const u=new URL(v),h=u.hostname.toLowerCase();if(u.protocol!=='https:'){s+=18;i.push('The link does not use HTTPS')};if(/\d+\.\d+\.\d+\.\d+/.test(h)){s+=20;i.push('The destination uses a raw IP address instead of a normal domain')};if(h.includes('xn--')){s+=18;i.push('The domain uses punycode, which can be used for lookalike names')};if((h.match(/\./g)||[]).length>=3){s+=7;i.push('The domain contains many nested subdomains')};if(v.includes('@')){s+=16;i.push('The URL contains an @ symbol that can obscure the real destination')};if(/login|verify|secure|account|wallet|bank|password|update/i.test(u.pathname+u.search)){s+=7;i.push('The link path uses account, login or verification language')};if(!i.length)i.push('No obvious structural URL warning signs were detected')}catch{s=35;i.push('The text does not appear to be a well-formed URL')}return result('phishing',s,i)}
+function render(r){$('emptyState').hidden=true;$('resultState').hidden=false;$('resultCategory').textContent=r.label;$('riskSummary').textContent=r.summary;const colors={LOW:'#23c77a',MEDIUM:'#e1b34d',HIGH:'#f09a48',CRITICAL:'#ef5a62'},c=colors[r.level],b=$('riskBadge');b.textContent=`${r.level} • ${r.score}%`;b.style.cssText=`background:${c}22;color:${c};border:1px solid ${c}66`;$('riskMeterFill').style.cssText=`width:${r.score}%;background:${c}`;$('indicatorList').replaceChildren(...r.indicators.map(t=>Object.assign(document.createElement('li'),{textContent:t})));$('actionList').replaceChildren(...r.actions.map(t=>Object.assign(document.createElement('li'),{textContent:t})));$('evidenceTags').replaceChildren(...r.evidence.map(t=>Object.assign(document.createElement('span'),{textContent:t})));$('resultPanel').dataset.lastResult=JSON.stringify(r);status('resultActionStatus');if(matchMedia('(max-width:900px)').matches)$('resultPanel').scrollIntoView({behavior:'smooth',block:'start'})}
+function reset(){ $('resultState').hidden=true;$('emptyState').hidden=false;$('resultPanel').removeAttribute('data-last-result');status('resultActionStatus') }
+$('analyzeMessage').onclick=()=>{const t=$('messageInput').value.trim();if(!t){status('messageStatus','Paste a suspicious message or extract text from a screenshot first.');$('messageInput').focus();return}status('messageStatus');render(analyseText(t))};
+$('clearMessage').onclick=()=>{$('messageInput').value='';$('screenshotInput').value='';status('ocrStatus');status('messageStatus');reset();$('messageInput').focus()};
+$('analyzeBec').onclick=()=>{const sub=$('emailSubject').value.trim(),body=$('emailBody').value.trim();if(!sub&&!body){status('becStatus','Enter the email subject, body, or both before running the check.');$('emailBody').focus();return}status('becStatus');const from=$('fromEmail').value.trim(),reply=$('replyToEmail').value.trim(),domain=e=>(e.split('@')[1]||'').toLowerCase(),m=!!(from&&reply&&domain(from)&&domain(reply)&&domain(from)!==domain(reply));const x=catScore(sub+'\n'+body,'bec');if(m){x.score+=28;x.indicators.push('The From and Reply-To email domains are different')}render(result('bec',x.score,x.indicators,{replyMismatch:m}))};
+$('analyzeUrl').onclick=()=>{const v=$('urlInput').value.trim();if(!v){status('urlStatus','Enter or paste a link before running the check.');$('urlInput').focus();return}status('urlStatus');render(analyseUrl(v))};
+$('analyzeSextortion').onclick=()=>{const o={moneyDemand:$('moneyDemand').checked,moreImagesDemand:$('moreImagesDemand').checked,publicationThreat:$('publicationThreat').checked,minorInvolved:$('minorInvolved').checked},t=$('sextortionText').value.trim();if(!t&&!Object.values(o).some(Boolean)){status('sextortionStatus','Paste the threatening message or select at least one description of what is happening.');$('sextortionText').focus();return}status('sextortionStatus');const x=catScore(t,'sextortion');if(o.moneyDemand){x.score+=15;x.indicators.push('A payment demand was explicitly reported')}if(o.moreImagesDemand){x.score+=18;x.indicators.push('A demand for additional images was explicitly reported')}if(o.publicationThreat){x.score+=20;x.indicators.push('A threat to publish or share content was explicitly reported')}if(o.minorInvolved){x.score+=25;x.indicators.push('A person under 18 may be involved — urgent safeguarding is recommended')}render(result('sextortion',Math.max(10,x.score),x.indicators,o))};
+$('screenshotInput').onchange=async()=>{const f=$('screenshotInput').files?.[0];if(!f)return;if(!/^image\/(png|jpeg|webp)$/i.test(f.type)){status('ocrStatus','Unsupported file type. Please use PNG, JPG or WEBP.');return}if(f.size>8*1024*1024){status('ocrStatus','The screenshot is larger than 8 MB. Please use a smaller image.');return}if(!window.Tesseract){status('ocrStatus','Text extraction could not load. You can still paste the message manually.');return}const btn=$('analyzeMessage');btn.disabled=true;status('ocrStatus','Extracting text locally from the screenshot…');try{const r=await Tesseract.recognize(f,'eng',{logger:m=>{if(m.status==='recognizing text')status('ocrStatus',`Extracting text… ${Math.round((m.progress||0)*100)}%`)}}),t=r?.data?.text?.trim()||'';if(t){$('messageInput').value=t;status('ocrStatus','Text extracted. Review it, then run the risk check.');status('messageStatus')}else status('ocrStatus','No readable text was found. Paste the message manually.')}catch(e){console.error(e);status('ocrStatus','Text extraction failed. Paste the message manually.')}finally{btn.disabled=false}};
+function asText(r){return['JCTC CyberGuard — Risk Assessment',`Category: ${r.label}`,`Risk: ${r.level} (${r.score}%)`,'',r.summary,'','Why it was flagged:',...r.indicators.map(x=>'• '+x),'','What to do now:',...r.actions.map((x,i)=>`${i+1}. ${x}`),'','Evidence to preserve:',r.evidence.join(', '),'','This is a risk assessment, not a finding of guilt or criminality.'].join('\n')}
+$('copyResultBtn').onclick=async()=>{const raw=$('resultPanel').dataset.lastResult;if(!raw)return;const t=asText(JSON.parse(raw));try{await navigator.clipboard.writeText(t)}catch{const e=document.createElement('textarea');e.value=t;document.body.appendChild(e);e.select();document.execCommand('copy');e.remove()}status('resultActionStatus','Assessment copied to clipboard.')};
+$('newCheckBtn').onclick=()=>{reset();scrollTo({top:$('main').offsetTop,behavior:'smooth'})};
+document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key==='Enter')document.querySelector('.mode-panel.active .primary-btn')?.click()});
+let prompt=null;addEventListener('beforeinstallprompt',e=>{e.preventDefault();prompt=e;$('installBtn').hidden=false});$('installBtn').onclick=async()=>{if(!prompt)return;prompt.prompt();await prompt.userChoice;prompt=null;$('installBtn').hidden=true};
+if('serviceWorker'in navigator)addEventListener('load',()=>navigator.serviceWorker.register('sw.js?v=3.0.1').then(r=>r.update()).catch(console.warn));
+switchMode('message');reset();
